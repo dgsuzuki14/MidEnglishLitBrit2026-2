@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Literature Exam</title>
+<style>
+:root{
+  --color-bg:#f7f6f2;--color-surface:#ffffff;--color-surface-2:#fbfbf9;--color-surface-offset:#f3f0ec;
+  --color-text:#28251d;--color-text-muted:#6b6a65;--color-border:#d4d1ca;
+  --color-primary:#01696f;--color-primary-hover:#0c4e54;
+  --color-error:#a12c7b;--color-success:#437a22;
+  --radius-md:0.5rem;--radius-lg:0.75rem;--radius-full:9999px;
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08);--shadow-lg:0 12px 32px rgba(0,0,0,0.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Segoe UI',Arial,sans-serif;background:var(--color-bg);color:var(--color-text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  -webkit-user-select:none;user-select:none;
+}
+.card{
+  background:var(--color-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);
+  max-width:760px;width:100%;padding:32px;
+}
+h1{font-size:1.6rem;margin-bottom:8px;color:var(--color-primary);}
+h2{font-size:1.2rem;margin-bottom:16px;}
+p.sub{color:var(--color-text-muted);margin-bottom:24px;}
+label{display:block;font-weight:600;margin-bottom:6px;margin-top:16px;}
+input[type=text],input[type=email],input[type=password]{
+  width:100%;padding:12px 14px;border:1px solid var(--color-border);border-radius:var(--radius-md);
+  font-size:1rem;background:var(--color-surface-2);color:var(--color-text);
+}
+input:focus{outline:2px solid var(--color-primary);outline-offset:2px;}
+button{
+  cursor:pointer;border:none;border-radius:var(--radius-full);padding:12px 28px;font-size:1rem;font-weight:600;
+  background:var(--color-primary);color:#fff;margin-top:24px;transition:background 0.18s;
+}
+button:hover{background:var(--color-primary-hover);}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+.error-msg{color:var(--color-error);font-size:0.9rem;margin-top:8px;min-height:1.2em;}
+.hidden{display:none !important;}
+
+/* Exam layout */
+#examScreen{max-width:900px;}
+.exam-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.progress-bar{background:var(--color-surface-offset);border-radius:var(--radius-full);height:10px;width:100%;overflow:hidden;margin-bottom:20px;}
+.progress-fill{background:var(--color-primary);height:100%;transition:width 0.3s;}
+.timer{font-weight:700;color:var(--color-primary);}
+.q-category{display:inline-block;background:var(--color-surface-offset);color:var(--color-primary);font-size:0.75rem;font-weight:700;text-transform:uppercase;padding:4px 10px;border-radius:var(--radius-full);margin-bottom:10px;letter-spacing:0.5px;}
+.q-text{font-size:1.15rem;font-weight:600;margin-bottom:18px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:10px;}
+.option{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--color-border);
+  border-radius:var(--radius-md);cursor:pointer;transition:all 0.15s;background:var(--color-surface-2);
+}
+.option:hover{border-color:var(--color-primary);background:var(--color-surface);}
+.option.selected{border-color:var(--color-primary);background:color-mix(in oklab, var(--color-primary) 10%, white);}
+.option input{accent-color:var(--color-primary);width:18px;height:18px;flex-shrink:0;}
+.nav-buttons{display:flex;justify-content:space-between;margin-top:24px;}
+.btn-secondary{background:var(--color-surface-offset);color:var(--color-text);}
+.btn-secondary:hover{background:var(--color-border);}
+
+/* Lock overlay */
+#lockOverlay{
+  position:fixed;inset:0;background:rgba(20,15,10,0.96);z-index:9999;display:flex;
+  align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;padding:24px;
+}
+#lockOverlay h2{color:#fff;font-size:1.6rem;margin-bottom:12px;}
+#lockOverlay p{color:#ddd;margin-bottom:20px;max-width:480px;}
+#lockOverlay input{max-width:280px;text-align:center;}
+#lockOverlay .error-msg{color:#ff8fae;}
+
+/* Results */
+.result-summary{text-align:center;padding:20px 0;}
+.score-circle{
+  width:140px;height:140px;border-radius:50%;border:8px solid var(--color-primary);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;margin:0 auto 20px;
+}
+.score-circle .score-num{font-size:2rem;font-weight:800;color:var(--color-primary);}
+.review-item{border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;}
+.review-item.correct{border-left:4px solid var(--color-success);}
+.review-item.incorrect{border-left:4px solid var(--color-error);}
+.review-answer{font-size:0.9rem;margin-top:6px;}
+.review-answer.your-wrong{color:var(--color-error);}
+.review-answer.correct-ans{color:var(--color-success);}
+.explanation{font-size:0.85rem;color:var(--color-text-muted);margin-top:8px;font-style:italic;}
+#reviewSection{max-height:60vh;overflow-y:auto;margin-top:16px;}
+.badge-warning{background:#fff3cd;color:#856404;padding:10px 14px;border-radius:var(--radius-md);margin-bottom:16px;font-size:0.9rem;}
+footer.note{margin-top:20px;font-size:0.75rem;color:var(--color-text-muted);text-align:center;}
+</style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="lockOverlay" class="hidden">
+  <h2>⚠ Exam Locked</h2>
+  <p>You exited fullscreen mode, switched windows/tabs, or attempted a restricted action. Enter the unlock password to continue your exam. Your answers are safe.</p>
+  <input type="password" id="unlockPassword" placeholder="Unlock password" autocomplete="off">
+  <div class="error-msg" id="unlockError"></div>
+  <button id="unlockBtn">Unlock Exam</button>
+</div>
+
+<div id="startScreen" class="card">
+  <h1>English Literature Exam</h1>
+  <p class="sub">Topics: Beowulf, Chaucer's Tales, and Historical Context. This exam runs in secure fullscreen mode — right-click, copy, and window switching are disabled.</p>
+  <label for="fullName">Full Name</label>
+  <input type="text" id="fullName" placeholder="e.g. Juan Pérez López" autocomplete="off">
+  <label for="email">Institutional Email</label>
+  <input type="email" id="email" placeholder="e.g. juan.perez@institution.edu" autocomplete="off">
+  <div class="error-msg" id="startError"></div>
+  <button id="startBtn">Begin Exam (Fullscreen)</button>
+  <footer class="note">40 questions total · 15 Beowulf · 15 Chaucer · 10 Historical Context · Answer order and choices are randomized each attempt.</footer>
+</div>
+
+<div id="examScreen" class="card hidden">
+  <div class="exam-header">
+    <div id="qCounter">Question 1 of 40</div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="qCategory" class="q-category">Beowulf</div>
+  <div id="qText" class="q-text"></div>
+  <div id="options" class="options"></div>
+  <div class="nav-buttons">
+    <button class="btn-secondary" id="prevBtn">Previous</button>
+    <button id="nextBtn">Next</button>
+  </div>
+</div>
+
+<div id="resultScreen" class="card hidden">
+  <div class="result-summary">
+    <div class="score-circle"><div class="score-num" id="scorePct">0%</div><div>Score</div></div>
+    <h2 id="scoreText"></h2>
+    <p id="studentInfo" class="sub"></p>
+  </div>
+  <div id="teacherUnlock">
+    <label for="teacherPassword">Teacher Password (to review questions & answers)</label>
+    <input type="password" id="teacherPassword" placeholder="Enter teacher password" autocomplete="off">
+    <div class="error-msg" id="teacherError"></div>
+    <button id="revealBtn">View Questions & Answers</button>
+  </div>
+  <div id="reviewSection" class="hidden"></div>
+</div>
+
+<script>
+const QUESTION_BANK = 
+[{"id": 1, "question": "Who is the king of the Danes whose mead-hall is attacked?", "options": {"A": "Hrothgar", "B": "Hygelac", "C": "Ecgtheow", "D": "Unferth"}, "correct": "A", "cat": "beowulf", "explanation": "Hrothgar is the elderly king of the Danes and builder of Heorot."}, {"id": 2, "question": "What is the name of the great mead-hall built by the Danish king?", "options": {"A": "Valhalla", "B": "Heorot", "C": "Camelot", "D": "Avalon"}, "correct": "B", "cat": "beowulf", "explanation": "Heorot is the magnificent hall that Grendel attacks for 12 years."}, {"id": 3, "question": "From which tribe does the hero Beowulf originate?", "options": {"A": "Danes", "B": "Saxons", "C": "Geats", "D": "Frisians"}, "correct": "C", "cat": "beowulf", "explanation": "Beowulf comes from Geatland, located in modern-day southern Sweden."}, {"id": 4, "question": "From which biblical figure is Grendel said to be descended?", "options": {"A": "Lucifer", "B": "Judas", "C": "Moses", "D": "Cain"}, "correct": "D", "cat": "beowulf", "explanation": "Grendel is described as a descendant of Cain, the first murderer in the Bible."}, {"id": 5, "question": "Who is Beowulf's father?", "options": {"A": "Ecgtheow", "B": "Hrethel", "C": "Hygelac", "D": "Wulfgar"}, "correct": "A", "cat": "beowulf", "explanation": "Ecgtheow was a warrior who had a history with King Hrothgar."}, {"id": 6, "question": "Who is the king of the Geats at the beginning of the poem?", "options": {"A": "Heardred", "B": "Hygelac", "C": "Hrethel", "D": "Ongentheow"}, "correct": "B", "cat": "beowulf", "explanation": "Hygelac is Beowulf's uncle and his feudal lord."}, {"id": 7, "question": "Which Danish warrior verbally challenges Beowulf upon his arrival?", "options": {"A": "Aeschere", "B": "Wulfgar", "C": "Unferth", "D": "Hrothgar"}, "correct": "C", "cat": "beowulf", "explanation": "Unferth is jealous of Beowulf and taunts him about a swimming match."}, {"id": 8, "question": "Who was Beowulf's opponent in a legendary swimming match?", "options": {"A": "Grendel", "B": "Unferth", "C": "Hrothgar", "D": "Breca"}, "correct": "D", "cat": "beowulf", "explanation": "Beowulf swam against Breca for several days in the open sea."}, {"id": 9, "question": "What trophy does Beowulf take after his battle with Grendel?", "options": {"A": "Grendel's arm", "B": "Grendel's head", "C": "A magic sword", "D": "A golden cup"}, "correct": "A", "cat": "beowulf", "explanation": "Beowulf tears off Grendel's arm, which is hung in Heorot."}, {"id": 10, "question": "What weapon does Beowulf use to defeat Grendel?", "options": {"A": "The sword Hrunting", "B": "His bare hands", "C": "A giant's sword", "D": "A spear of ash"}, "correct": "B", "cat": "beowulf", "explanation": "Beowulf vows to fight without weapons, relying on his legendary grip."}, {"id": 11, "question": "Who seeks revenge for the death of Grendel?", "options": {"A": "The Dragon", "B": "The Swedish King", "C": "Grendel's mother", "D": "Unferth"}, "correct": "C", "cat": "beowulf", "explanation": "Grendel's mother attacks Heorot to avenge her son's death."}, {"id": 12, "question": "Who does Grendel's mother kill during her attack on Heorot?", "options": {"A": "Wealhtheow", "B": "Hrothgar", "C": "Unferth", "D": "Aeschere"}, "correct": "D", "cat": "beowulf", "explanation": "She kills Aeschere, Hrothgar's most trusted advisor and friend."}, {"id": 13, "question": "Where is the lair of Grendel's mother located?", "options": {"A": "In an underwater cave", "B": "In a dark forest", "C": "In a volcano", "D": "On a frozen mountain"}, "correct": "A", "cat": "beowulf", "explanation": "Her lair is at the bottom of a boiling, monster-filled mere."}, {"id": 14, "question": "What is the name of the sword Unferth lends to Beowulf?", "options": {"A": "Naegling", "B": "Hrunting", "C": "Excalibur", "D": "Durendal"}, "correct": "B", "cat": "beowulf", "explanation": "Unferth lends him Hrunting, though it fails to harm Grendel's mother."}, {"id": 15, "question": "With what weapon does Beowulf defeat Grendel's mother?", "options": {"A": "His bare hands", "B": "Hrunting", "C": "An ancient giant's sword", "D": "A magical dagger"}, "correct": "C", "cat": "beowulf", "explanation": "He finds a massive sword forged by giants in her lair."}, {"id": 16, "question": "What does Beowulf bring to the surface after defeating Grendel's mother?", "options": {"A": "The treasure of the cave", "B": "Aeschere's body", "C": "Grendel's mother alive", "D": "Grendel's head and the sword hilt"}, "correct": "D", "cat": "beowulf", "explanation": "The blade melted from acidic blood, leaving only the hilt and the head."}, {"id": 17, "question": "How many years does Beowulf rule as king of the Geats?", "options": {"A": "50 years", "B": "10 years", "C": "20 years", "D": "100 years"}, "correct": "A", "cat": "beowulf", "explanation": "He rules peacefully for 50 winters before the dragon awakens."}, {"id": 18, "question": "What awakens the dragon's wrath?", "options": {"A": "A Swedish invasion", "B": "A thief stealing a jeweled cup", "C": "Beowulf's challenge", "D": "An earthquake"}, "correct": "B", "cat": "beowulf", "explanation": "A runaway slave steals a golden cup from the dragon's hoard."}, {"id": 19, "question": "What is the name of the sword Beowulf uses against the dragon?", "options": {"A": "Hrunting", "B": "Gram", "C": "Naegling", "D": "Tyrfing"}, "correct": "C", "cat": "beowulf", "explanation": "Naegling breaks during the fight because Beowulf's strength is too great."}, {"id": 20, "question": "Who is the only warrior to help Beowulf fight the dragon?", "options": {"A": "Hygelac", "B": "Unferth", "C": "Wulfgar", "D": "Wiglaf"}, "correct": "D", "cat": "beowulf", "explanation": "Wiglaf remains loyal while the other warriors flee in terror."}, {"id": 21, "question": "What Anglo-Saxon concept refers to the inexorable fate governing men?", "options": {"A": "Wyrd", "B": "Comitatus", "C": "Wergild", "D": "Kenning"}, "correct": "A", "cat": "beowulf", "explanation": "Wyrd' represents the pagan concept of inescapable destiny."}, {"id": 22, "question": "What concept refers to the 'man-price' paid to avoid a blood feud?", "options": {"A": "Comitatus", "B": "Wergild", "C": "Scop", "D": "Wyrd"}, "correct": "B", "cat": "beowulf", "explanation": "Wergild was a legal system of compensation for death or injury."}, {"id": 23, "question": "What was the title of the Anglo-Saxon poet or bard who sang epics?", "options": {"A": "Druid", "B": "Skald", "C": "Scop", "D": "Gleeman"}, "correct": "C", "cat": "beowulf", "explanation": "The 'Scop' was the oral historian and entertainer of the tribe."}, {"id": 24, "question": "Who is Wealhtheow?", "options": {"A": "Grendel's mother", "B": "Beowulf's wife", "C": "Hygelac's wife", "D": "Hrothgar's wife"}, "correct": "D", "cat": "beowulf", "explanation": "Wealhtheow is the queen of the Danes who serves the ceremonial mead."}, {"id": 25, "question": "Which legendary ancestor of the Danes opens the poem with his funeral?", "options": {"A": "Scyld Scefing", "B": "Beowulf the Dane", "C": "Hrothgar", "D": "Ecgtheow"}, "correct": "A", "cat": "beowulf", "explanation": "The poem begins with the mythic origins of the Danish royal line."}, {"id": 26, "question": "What figure of speech is 'whale-road' an example of?", "options": {"A": "Simile", "B": "Kenning", "C": "Metaphor", "D": "Hyperbole"}, "correct": "B", "cat": "beowulf", "explanation": "A kenning is a compound poetic phrase substituting a simple noun."}, {"id": 27, "question": "What happens to the dragon's treasure at the end of the poem?", "options": {"A": "It is distributed to the Geats", "B": "It is returned to the Danes", "C": "It is buried with Beowulf", "D": "It is thrown into the sea"}, "correct": "C", "cat": "beowulf", "explanation": "The Geats consider it cursed and bury it in Beowulf's barrow."}, {"id": 28, "question": "How many companions does Beowulf initially take to Denmark?", "options": {"A": "10", "B": "50", "C": "300", "D": "14"}, "correct": "D", "cat": "beowulf", "explanation": "He selects 14 of the bravest Geatish warriors for the journey."}, {"id": 29, "question": "What code defines the absolute loyalty between a lord and his warriors?", "options": {"A": "Comitatus", "B": "Wergild", "C": "Flyting", "D": "Wyrd"}, "correct": "A", "cat": "beowulf", "explanation": "Comitatus required warriors to fight to the death for their leader."}, {"id": 30, "question": "Who does Beowulf initially support as king after Hygelac's death?", "options": {"A": "Hrethel", "B": "Heardred", "C": "Ongentheow", "D": "Wiglaf"}, "correct": "B", "cat": "beowulf", "explanation": "He refuses the throne to act as regent and protector for Heardred."}, {"id": 31, "question": "Which enemy tribe poses a fatal threat to the Geats after Beowulf's death?", "options": {"A": "Danes", "B": "Saxons", "C": "Swedes (Shylfings)", "D": "Frisians"}, "correct": "C", "cat": "beowulf", "explanation": "The poem foreshadows the destruction of the Geats by the Swedes."}, {"id": 32, "question": "What sin does Hrothgar warn Beowulf to avoid in his famous 'sermon'?", "options": {"A": "Lust", "B": "Gluttony", "C": "Wrath", "D": "Pride (Hubris)"}, "correct": "D", "cat": "beowulf", "explanation": "Hrothgar warns him about the dangers of arrogance and complacency."}, {"id": 33, "question": "What physical attribute is Beowulf most famous for?", "options": {"A": "His grip strength", "B": "His agility", "C": "His immunity to fire", "D": "His night vision"}, "correct": "A", "cat": "beowulf", "explanation": "He is said to have the strength of thirty men in his hand grip."}, {"id": 34, "question": "Who is the queen of the Geats, wife of Hygelac?", "options": {"A": "Wealhtheow", "B": "Hygd", "C": "Modthryth", "D": "Freawaru"}, "correct": "B", "cat": "beowulf", "explanation": "Hygd is presented as a good, generous queen."}, {"id": 35, "question": "What is Beowulf's final request regarding his burial?", "options": {"A": "To be burned in secret", "B": "To be sent out on a ship", "C": "To have a barrow built on a coastal cliff", "D": "To be buried in Heorot"}, "correct": "C", "cat": "beowulf", "explanation": "He wants his barrow to serve as a landmark for sailors."}, {"id": 36, "question": "What punishment do the cowardly warriors receive from Wiglaf?", "options": {"A": "Execution", "B": "Mutilation", "C": "Imprisonment", "D": "Exile and loss of lands"}, "correct": "D", "cat": "beowulf", "explanation": "They are stripped of their rights, reflecting the severity of breaking comitatus."}, {"id": 37, "question": "How is Wiglaf related to Beowulf?", "options": {"A": "They are kinsmen (Waegmundings)", "B": "Father and son", "C": "Uncle and nephew", "D": "They are not related"}, "correct": "A", "cat": "beowulf", "explanation": "Wiglaf is the last remaining kinsman of Beowulf's clan."}, {"id": 38, "question": "What gift does Hrothgar NOT give Beowulf after defeating Grendel?", "options": {"A": "A golden standard", "B": "His own kingdom", "C": "A helmet and mail-shirt", "D": "An ancient sword"}, "correct": "B", "cat": "beowulf", "explanation": "Hrothgar gives him lavish war-gear and treasure, but not the throne."}, {"id": 39, "question": "What does Beowulf give Wiglaf right before he dies?", "options": {"A": "A new sword", "B": "His shield", "C": "His golden collar and armor", "D": "A map to more treasure"}, "correct": "C", "cat": "beowulf", "explanation": "Passing his armor symbolizes the transfer of leadership."}, {"id": 40, "question": "How is Beowulf's body disposed of before the barrow is built?", "options": {"A": "Buried in the earth", "B": "Sent out to sea", "C": "Mummified", "D": "Burned on a massive pyre"}, "correct": "D", "cat": "beowulf", "explanation": "Pagan funeral customs dictated burning the body on a pyre."}, {"id": 41, "question": "Who is the author of 'The Canterbury Tales'?", "options": {"A": "Geoffrey Chaucer", "B": "William Shakespeare", "C": "John Milton", "D": "Thomas Malory"}, "correct": "A", "cat": "chaucer", "explanation": "Chaucer wrote this foundational English literary work in the 14th century."}, {"id": 42, "question": "Where do the pilgrims gather before starting their journey?", "options": {"A": "Westminster Abbey", "B": "The Tabard Inn in Southwark", "C": "St. Paul's Cathedral", "D": "Windsor Castle"}, "correct": "B", "cat": "chaucer", "explanation": "The group meets at the Tabard Inn, located just south of London."}, {"id": 43, "question": "Where are the pilgrims traveling to?", "options": {"A": "Rome", "B": "Jerusalem", "C": "The shrine of Thomas Becket in Canterbury", "D": "Glastonbury Tor"}, "correct": "C", "cat": "chaucer", "explanation": "They are making a pilgrimage to the popular shrine of the martyred saint."}, {"id": 44, "question": "According to the General Prologue, how many pilgrims gather at the inn (excluding the Host and Chaucer)?", "options": {"A": "12", "B": "50", "C": "40", "D": "29"}, "correct": "D", "cat": "chaucer", "explanation": "Chaucer states there were 'nine and twenty in a company'."}, {"id": 45, "question": "What is the name of the Host who proposes the storytelling contest?", "options": {"A": "Harry Bailey", "B": "Geoffrey Chaucer", "C": "John the Carpenter", "D": "Hubert the Friar"}, "correct": "A", "cat": "chaucer", "explanation": "Harry Bailey is the jovial innkeeper who guides the group."}, {"id": 46, "question": "How many tales was each pilgrim supposed to tell in total (round trip)?", "options": {"A": "1", "B": "4", "C": "2", "D": "3"}, "correct": "B", "cat": "chaucer", "explanation": "The plan was 2 tales on the way to Canterbury and 2 on the way back."}, {"id": 47, "question": "What is the prize for the pilgrim who tells the best tale?", "options": {"A": "A horse", "B": "A bag of gold coins", "C": "A free supper paid for by the others", "D": "A holy relic"}, "correct": "C", "cat": "chaucer", "explanation": "The winner gets a meal at the Tabard Inn at the expense of the rest."}, {"id": 48, "question": "Which pilgrim is described as a model of chivalry, truth, and honor?", "options": {"A": "The Squire", "B": "The Monk", "C": "The Parson", "D": "The Knight"}, "correct": "D", "cat": "chaucer", "explanation": "The Knight is highly idealized and has fought in many Crusades."}, {"id": 49, "question": "Who is the Knight's son, a young man who loves singing and romance?", "options": {"A": "The Squire", "B": "The Yeoman", "C": "The Clerk", "D": "The Franklin"}, "correct": "A", "cat": "chaucer", "explanation": "The Squire is a young, fashionable courtier in contrast to his father."}, {"id": 50, "question": "Which character speaks provincial French and weeps if a mouse is caught?", "options": {"A": "The Wife of Bath", "B": "The Prioress (Madame Eglantine)", "C": "The Second Nun", "D": "The Miller's Daughter"}, "correct": "B", "cat": "chaucer", "explanation": "The Prioress tries very hard to appear courtly and refined."}, {"id": 51, "question": "Which pilgrim prefers hunting and wearing fur to following monastic rules?", "options": {"A": "The Friar", "B": "The Parson", "C": "The Monk", "D": "The Pardoner"}, "correct": "C", "cat": "chaucer", "explanation": "The Monk is a worldly figure who ignores the strict Rule of St. Benedict."}, {"id": 52, "question": "Which pilgrim has been married five times and traveled to Jerusalem?", "options": {"A": "The Prioress", "B": "The Knight's Wife", "C": "The Nun's Priest", "D": "The Wife of Bath"}, "correct": "D", "cat": "chaucer", "explanation": "She is an independent, outspoken woman and experienced traveler."}, {"id": 53, "question": "What is the main theme of the Wife of Bath's Tale?", "options": {"A": "Women desire sovereignty over their husbands", "B": "Chastity is the highest virtue", "C": "Knights must always be brave", "D": "Poverty brings true happiness"}, "correct": "A", "cat": "chaucer", "explanation": "Her tale concludes that women want mastery in their relationships."}, {"id": 54, "question": "Who rudely interrupts the Host to tell a tale after the Knight finishes?", "options": {"A": "The Pardoner", "B": "The Miller", "C": "The Reeve", "D": "The Summoner"}, "correct": "B", "cat": "chaucer", "explanation": "The drunken Miller insists on telling his bawdy tale out of turn."}, {"id": 55, "question": "What literary genre best describes the Miller's Tale?", "options": {"A": "Epic romance", "B": "Sermon", "C": "Fabliau", "D": "Allegory"}, "correct": "C", "cat": "chaucer", "explanation": "A fabliau is a comic, often bawdy story involving trickery."}, {"id": 56, "question": "Who are the main characters in the Miller's Tale?", "options": {"A": "Arcite and Palamon", "B": "Chanticleer and Pertelote", "C": "Dorigen and Arveragus", "D": "John, Alisoun, and Nicholas"}, "correct": "D", "cat": "chaucer", "explanation": "It is a farce about an astrology student who tricks a foolish carpenter."}, {"id": 57, "question": "Which pilgrim sells fake holy relics and papal indulgences?", "options": {"A": "The Pardoner", "B": "The Friar", "C": "The Monk", "D": "The Summoner"}, "correct": "A", "cat": "chaucer", "explanation": "The Pardoner is depicted as highly corrupt and deceitful."}, {"id": 58, "question": "What is the moral of the Pardoner's Tale?", "options": {"A": "Love conquers all", "B": "Greed is the root of all evil", "C": "Never trust a flattering fox", "D": "Fate is unavoidable"}, "correct": "B", "cat": "chaucer", "explanation": "He preaches 'Radix malorum est cupiditas' to extort money from people."}, {"id": 59, "question": "What are the three rioters in the Pardoner's Tale searching for?", "options": {"A": "A hidden treasure", "B": "The Holy Grail", "C": "Death", "D": "A dragon"}, "correct": "C", "cat": "chaucer", "explanation": "They want to kill Death, but find gold which leads them to kill each other."}, {"id": 60, "question": "What animal is the protagonist of the Nun's Priest's Tale?", "options": {"A": "A fox", "B": "A horse", "C": "A dog", "D": "A rooster named Chanticleer"}, "correct": "D", "cat": "chaucer", "explanation": "It is a beast fable featuring a vain rooster and a flattering fox."}, {"id": 61, "question": "Which pilgrim is portrayed as the ideal, truly devout clergyman?", "options": {"A": "The Parson", "B": "The Monk", "C": "The Friar", "D": "The Pardoner"}, "correct": "A", "cat": "chaucer", "explanation": "The Parson lives in poverty and genuinely cares for his parishioners."}, {"id": 62, "question": "Which character suffers from severe acne, scabs, and a frightening face?", "options": {"A": "The Cook", "B": "The Summoner", "C": "The Miller", "D": "The Reeve"}, "correct": "B", "cat": "chaucer", "explanation": "The Summoner's physical ugliness mirrors his moral corruption."}, {"id": 63, "question": "Who is the Parson's brother, an honest and hard-working peasant?", "options": {"A": "The Manciple", "B": "The Shipman", "C": "The Plowman", "D": "The Yeoman"}, "correct": "C", "cat": "chaucer", "explanation": "The Plowman represents the ideal Christian laborer."}, {"id": 64, "question": "What physical ailment does the Cook have that grosses out the narrator?", "options": {"A": "A missing eye", "B": "Deafness", "C": "No hands", "D": "A running ulcer on his leg"}, "correct": "D", "cat": "chaucer", "explanation": "Chaucer contrasts his culinary skills with his disgusting open sore."}, {"id": 65, "question": "Which pilgrim would rather spend money on books of philosophy than fine clothes?", "options": {"A": "The Oxford Clerk", "B": "The Merchant", "C": "The Doctor", "D": "The Knight"}, "correct": "A", "cat": "chaucer", "explanation": "The Clerk is a devoted, impoverished scholar."}, {"id": 66, "question": "In what month does the pilgrimage begin?", "options": {"A": "March", "B": "April", "C": "May", "D": "September"}, "correct": "B", "cat": "chaucer", "explanation": "The poem opens famously with 'Whan that Aprill with his shoures soote...'."}, {"id": 67, "question": "What poetic form did Chaucer mostly use in the Tales, establishing it in English?", "options": {"A": "Haiku", "B": "Free verse", "C": "Heroic couplets (rhyming decasyllables)", "D": "Blank verse"}, "correct": "C", "cat": "chaucer", "explanation": "Chaucer popularized the iambic pentameter rhyming couplet."}, {"id": 68, "question": "How many tales did Chaucer actually complete before his death?", "options": {"A": "120", "B": "50", "C": "80", "D": "24 (some incomplete)"}, "correct": "D", "cat": "chaucer", "explanation": "The ambitious project remained unfinished when he died in 1400."}, {"id": 69, "question": "Whose tale is an epic romance about two knights, Arcite and Palamon?", "options": {"A": "The Knight's Tale", "B": "The Squire's Tale", "C": "The Franklin's Tale", "D": "The Physician's Tale"}, "correct": "A", "cat": "chaucer", "explanation": "The Knight tells a noble story of courtly love and destiny."}, {"id": 70, "question": "Who is the unfaithful young wife in the Merchant's Tale?", "options": {"A": "Alisoun", "B": "May", "C": "Emily", "D": "Dorigen"}, "correct": "B", "cat": "chaucer", "explanation": "May cheats on her old, blind husband January in a pear tree."}, {"id": 71, "question": "Which of these pilgrims does NOT belong to the religious or clerical class?", "options": {"A": "The Prioress", "B": "The Pardoner", "C": "The Franklin", "D": "The Friar"}, "correct": "C", "cat": "chaucer", "explanation": "The Franklin is a wealthy landowner known for his hospitality."}, {"id": 72, "question": "What does the Doctor of Physic value most, using astrology to gain it?", "options": {"A": "Fame", "B": "A cure for the plague", "C": "Religious salvation", "D": "Gold"}, "correct": "D", "cat": "chaucer", "explanation": "The narrator notes that the Doctor loved gold in special."}, {"id": 73, "question": "Which tale focuses on the promise made by Dorigen regarding black rocks?", "options": {"A": "The Franklin's Tale", "B": "The Miller's Tale", "C": "The Shipman's Tale", "D": "The Knight's Tale"}, "correct": "A", "cat": "chaucer", "explanation": "The tale explores themes of gentillesse and truth in marriage."}, {"id": 74, "question": "Which character pretends to be wealthy but is secretly heavily in debt?", "options": {"A": "The Squire", "B": "The Merchant", "C": "The Cook", "D": "The Parson"}, "correct": "B", "cat": "chaucer", "explanation": "The Merchant maintains a façade of prosperity despite his debts."}, {"id": 75, "question": "Which social group does Chaucer satirize the LEAST in the Prologue?", "options": {"A": "The corrupt clergy", "B": "The ostentatious bourgeoisie", "C": "The noble Knight and honest poor (Parson/Plowman)", "D": "The greedy merchants"}, "correct": "C", "cat": "chaucer", "explanation": "Chaucer highly idealizes the traditional figures of Knight, Parson, and Plowman."}, {"id": 76, "question": "How does the Host decide who will tell the first tale?", "options": {"A": "Alphabetical order", "B": "By social rank", "C": "Whoever shouts loudest", "D": "Drawing straws (cuts)"}, "correct": "D", "cat": "chaucer", "explanation": "They draw lots, and conveniently, the highest-ranking Knight wins."}, {"id": 77, "question": "Which tale is actually a long prose treatise on penitence and the seven deadly sins?", "options": {"A": "The Parson's Tale", "B": "The Knight's Tale", "C": "The Miller's Tale", "D": "The Wife of Bath's Tale"}, "correct": "A", "cat": "chaucer", "explanation": "The Parson concludes the storytelling with a moral sermon."}, {"id": 78, "question": "Which character is described as being 'somewhat deaf' due to a blow to the head?", "options": {"A": "The Prioress", "B": "The Wife of Bath", "C": "The Second Nun", "D": "The Host's Wife"}, "correct": "B", "cat": "chaucer", "explanation": "Her fifth husband struck her, causing her partial deafness."}, {"id": 79, "question": "Which male character has a high voice like a goat and no beard, implying effeminacy?", "options": {"A": "The Summoner", "B": "The Knight", "C": "The Pardoner", "D": "The Monk"}, "correct": "C", "cat": "chaucer", "explanation": "Chaucer uses these traits to suggest the Pardoner's moral and physical ambiguity."}, {"id": 80, "question": "In which dialect of English is 'The Canterbury Tales' written?", "options": {"A": "Old English", "B": "Northern Dialect", "C": "Gaelic", "D": "London Dialect (Middle English)"}, "correct": "D", "cat": "chaucer", "explanation": "Chaucer's use of the London dialect helped establish it as a literary standard."}, {"id": 81, "question": "During which historical period was 'Beowulf' composed?", "options": {"A": "Anglo-Saxon Period (Early Middle Ages)", "B": "Victorian Era", "C": "The Renaissance", "D": "The English Civil War"}, "correct": "A", "cat": "history", "explanation": "It was written between the 8th and early 11th centuries."}, {"id": 82, "question": "Which Germanic tribes invaded Britain, bringing the culture seen in Beowulf?", "options": {"A": "Vikings and Normans", "B": "Angles, Saxons, and Jutes", "C": "Romans and Celts", "D": "Franks and Goths"}, "correct": "B", "cat": "history", "explanation": "These tribes settled in Britain after the Roman withdrawal in the 5th century."}, {"id": 83, "question": "What language was 'Beowulf' originally composed in?", "options": {"A": "Latin", "B": "Middle English", "C": "Old English (Anglo-Saxon)", "D": "Norman French"}, "correct": "C", "cat": "history", "explanation": "Old English is a Germanic language vastly different from Modern English."}, {"id": 84, "question": "What religious tension is evident in the text of Beowulf?", "options": {"A": "Judaism vs. Islam", "B": "Catholicism vs. Protestantism", "C": "Buddhism vs. Hinduism", "D": "Pagan heroism vs. Christian morality"}, "correct": "D", "cat": "history", "explanation": "The poem mixes the ancient pagan culture with the poet's Christian worldview."}, {"id": 85, "question": "In what single surviving manuscript is Beowulf preserved?", "options": {"A": "Cotton Vitellius A. XV", "B": "The Winchester Manuscript", "C": "The Book of Kells", "D": "The Exeter Book"}, "correct": "A", "cat": "history", "explanation": "This manuscript narrowly survived a fire in 1731."}, {"id": 86, "question": "Which 1939 archaeological discovery illuminated the material culture of Beowulf?", "options": {"A": "Stonehenge", "B": "Sutton Hoo", "C": "Hadrian's Wall", "D": "Canterbury"}, "correct": "B", "cat": "history", "explanation": "The Sutton Hoo ship burial contained artifacts similar to those described in Beowulf."}, {"id": 87, "question": "How was Anglo-Saxon society primarily structured, as seen in Beowulf?", "options": {"A": "A democratic republic", "B": "A centralized Roman empire", "C": "Tribal kingdoms based on loyalty to a lord", "D": "A papal theocracy"}, "correct": "C", "cat": "history", "explanation": "Society revolved around the king (ring-giver) and his loyal thanes."}, {"id": 88, "question": "What major external threat faced Anglo-Saxon England during the time Beowulf was written down?", "options": {"A": "The Spanish Armada", "B": "The French Army", "C": "The Roman Legions", "D": "Viking invasions (Danes)"}, "correct": "D", "cat": "history", "explanation": "Viking raids from Scandinavia heavily influenced English culture at the time."}, {"id": 89, "question": "What institutions were primarily responsible for writing down and preserving Old English literature?", "options": {"A": "Christian monasteries", "B": "Royal courts", "C": "Merchant guilds", "D": "Universities"}, "correct": "A", "cat": "history", "explanation": "Monks were the literate class who preserved oral poetry on parchment."}, {"id": 90, "question": "What 1066 event ended the Anglo-Saxon era and transformed the English language?", "options": {"A": "The signing of Magna Carta", "B": "The Norman Conquest (Battle of Hastings)", "C": "The War of the Roses", "D": "The Black Death"}, "correct": "B", "cat": "history", "explanation": "William the Conqueror brought French language and feudalism to England."}, {"id": 91, "question": "In which century did Geoffrey Chaucer write 'The Canterbury Tales'?", "options": {"A": "12th Century", "B": "16th Century", "C": "14th Century (Late 1300s)", "D": "10th Century"}, "correct": "C", "cat": "history", "explanation": "Chaucer wrote the tales towards the end of his life, between 1387 and 1400."}, {"id": 92, "question": "What devastating event killed millions in Europe during Chaucer's lifetime, altering the economy?", "options": {"A": "The Spanish Flu", "B": "The Cholera Epidemic", "C": "The Smallpox Outbreak", "D": "The Black Death (Bubonic Plague)"}, "correct": "D", "cat": "history", "explanation": "The plague killed roughly a third of Europe, leading to labor shortages."}, {"id": 93, "question": "What major social uprising occurred in England in 1381, reflecting class tensions?", "options": {"A": "The Peasants' Revolt", "B": "The Glorious Revolution", "C": "The English Civil War", "D": "The Jacobite Rising"}, "correct": "A", "cat": "history", "explanation": "Led by Wat Tyler, peasants rebelled against oppressive poll taxes."}, {"id": 94, "question": "What prolonged military conflict between England and France formed the backdrop of Chaucer's life?", "options": {"A": "The Crusades", "B": "The Hundred Years' War", "C": "The War of the Roses", "D": "The Thirty Years' War"}, "correct": "B", "cat": "history", "explanation": "Chaucer himself was captured in France during this war and ransomed."}, {"id": 95, "question": "Why was the shrine of Thomas Becket so significant?", "options": {"A": "He translated the Bible", "B": "He discovered America", "C": "He was an Archbishop martyred by the king's knights", "D": "He was the first King of England"}, "correct": "C", "cat": "history", "explanation": "Becket was assassinated in Canterbury Cathedral in 1170 for opposing Henry II."}, {"id": 96, "question": "What language was primarily spoken by the English nobility before and during Chaucer's early life?", "options": {"A": "Old English", "B": "German", "C": "Spanish", "D": "French (Anglo-Norman)"}, "correct": "D", "cat": "history", "explanation": "French was the language of the court, making Chaucer's use of English revolutionary."}, {"id": 97, "question": "What socio-economic system was beginning to decline during Chaucer's era?", "options": {"A": "Feudalism", "B": "Capitalism", "C": "Communism", "D": "Mercantilism"}, "correct": "A", "cat": "history", "explanation": "The rise of towns and the merchant class began breaking down strict feudal ties."}, {"id": 98, "question": "Which religious reformer, contemporary with Chaucer, translated the Bible into English?", "options": {"A": "Martin Luther", "B": "John Wycliffe", "C": "John Calvin", "D": "Henry VIII"}, "correct": "B", "cat": "history", "explanation": "Wycliffe and the Lollards criticized Church corruption, themes echoed by Chaucer."}, {"id": 99, "question": "Under which English kings did Chaucer serve as a court official and diplomat?", "options": {"A": "William I and Stephen", "B": "Henry VIII and Edward VI", "C": "Edward III and Richard II", "D": "Elizabeth I and James I"}, "correct": "C", "cat": "history", "explanation": "Chaucer was a trusted civil servant under these 14th-century Plantagenet kings."}, {"id": 100, "question": "Which emerging social class is heavily represented among Chaucer's pilgrims?", "options": {"A": "The ancient Roman nobility", "B": "The enslaved serfs", "C": "The futuristic industrialists", "D": "The urban middle class (bourgeoisie)"}, "correct": "D", "cat": "history", "explanation": "Characters like the Merchant and the Guildsmen represent growing urban wealth."}];
+
+const UNLOCK_PASSWORD = "loquito1920";
+const TEACHER_PASSWORD = "loquito1920";
+const CATEGORY_COUNTS = { beowulf: 15, chaucer: 15, history: 10 };
+const CATEGORY_LABELS = { beowulf: "Beowulf", chaucer: "Chaucer's Tales", history: "Historical Context" };
+
+let examQuestions = [];
+let currentIndex = 0;
+let userAnswers = {};
+let studentName = "";
+let studentEmail = "";
+let timerInterval = null;
+let secondsElapsed = 0;
+let examFinished = false;
+let examStarted = false;
+let violationCount = 0;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildExam() {
+  let selected = [];
+  for (const cat in CATEGORY_COUNTS) {
+    const pool = QUESTION_BANK.filter(q => q.cat === cat);
+    const chosen = shuffle(pool).slice(0, CATEGORY_COUNTS[cat]);
+    selected = selected.concat(chosen);
+  }
+  selected = shuffle(selected);
+  selected = selected.map(q => {
+    const letters = ["A", "B", "C", "D"];
+    const shuffledLetters = shuffle(letters);
+    const newOptions = {};
+    let newCorrect = "";
+    shuffledLetters.forEach((origLetter, idx) => {
+      const newLetter = letters[idx];
+      newOptions[newLetter] = q.options[origLetter];
+      if (origLetter === q.correct) newCorrect = newLetter;
+    });
+    return {
+      id: q.id,
+      question: q.question,
+      options: newOptions,
+      correct: newCorrect,
+      cat: q.cat,
+      explanation: q.explanation
+    };
+  });
+  return selected;
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const sec = (s % 60).toString().padStart(2, "0");
+  return m + ":" + sec;
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    secondsElapsed++;
+    document.getElementById("timer").textContent = formatTime(secondsElapsed);
+  }, 1000);
+}
+
+function renderQuestion() {
+  const q = examQuestions[currentIndex];
+  document.getElementById("qCounter").textContent = `Question ${currentIndex + 1} of ${examQuestions.length}`;
+  document.getElementById("progressFill").style.width = ((currentIndex) / examQuestions.length * 100) + "%";
+  document.getElementById("qCategory").textContent = CATEGORY_LABELS[q.cat];
+  document.getElementById("qText").textContent = q.question;
+  const optsDiv = document.getElementById("options");
+  optsDiv.innerHTML = "";
+  ["A", "B", "C", "D"].forEach(letter => {
+    const selected = userAnswers[q.id] === letter;
+    const div = document.createElement("label");
+    div.className = "option" + (selected ? " selected" : "");
+    div.innerHTML = `<input type="radio" name="opt" value="${letter}" ${selected ? "checked" : ""}> <span>${q.options[letter]}</span>`;
+    div.addEventListener("click", () => {
+      userAnswers[q.id] = letter;
+      renderQuestion();
+    });
+    optsDiv.appendChild(div);
+  });
+  document.getElementById("prevBtn").disabled = currentIndex === 0;
+  document.getElementById("nextBtn").textContent = currentIndex === examQuestions.length - 1 ? "Finish Exam" : "Next";
+}
+
+document.getElementById("prevBtn").addEventListener("click", () => {
+  if (currentIndex > 0) { currentIndex--; renderQuestion(); }
+});
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (currentIndex < examQuestions.length - 1) {
+    currentIndex++;
+    renderQuestion();
+  } else {
+    finishExam();
+  }
+});
+
+function finishExam() {
+  examFinished = true;
+  clearInterval(timerInterval);
+  let correctCount = 0;
+  examQuestions.forEach(q => {
+    if (userAnswers[q.id] === q.correct) correctCount++;
+  });
+  const pct = Math.round((correctCount / examQuestions.length) * 100);
+  document.getElementById("examScreen").classList.add("hidden");
+  document.getElementById("resultScreen").classList.remove("hidden");
+  document.getElementById("scorePct").textContent = pct + "%";
+  document.getElementById("scoreText").textContent = `You answered ${correctCount} out of ${examQuestions.length} questions correctly.`;
+  document.getElementById("studentInfo").textContent = `${studentName} · ${studentEmail} · Time: ${formatTime(secondsElapsed)}`;
+  exitFullscreenSafely();
+}
+
+document.getElementById("revealBtn").addEventListener("click", () => {
+  const pw = document.getElementById("teacherPassword").value;
+  const errEl = document.getElementById("teacherError");
+  if (pw !== TEACHER_PASSWORD) {
+    errEl.textContent = "Incorrect teacher password.";
+    return;
+  }
+  errEl.textContent = "";
+  const reviewDiv = document.getElementById("reviewSection");
+  reviewDiv.innerHTML = "";
+  examQuestions.forEach((q, i) => {
+    const isCorrect = userAnswers[q.id] === q.correct;
+    const div = document.createElement("div");
+    div.className = "review-item " + (isCorrect ? "correct" : "incorrect");
+    const yourAns = userAnswers[q.id] ? `${userAnswers[q.id]}: ${q.options[userAnswers[q.id]]}` : "No answer";
+    div.innerHTML = `
+      <div><strong>${i + 1}. [${CATEGORY_LABELS[q.cat]}]</strong> ${q.question}</div>
+      <div class="review-answer ${isCorrect ? "" : "your-wrong"}">Student answer: ${yourAns}</div>
+      ${isCorrect ? "" : `<div class="review-answer correct-ans">Correct answer: ${q.correct}: ${q.options[q.correct]}</div>`}
+      <div class="explanation">${q.explanation}</div>
+    `;
+    reviewDiv.appendChild(div);
+  });
+  reviewDiv.classList.remove("hidden");
+  document.getElementById("teacherUnlock").classList.add("hidden");
+});
+
+/* ---------- Security / Anti-cheat ---------- */
+
+function requestFS() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) return el.requestFullscreen();
+  if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+  if (el.msRequestFullscreen) return el.msRequestFullscreen();
+  return Promise.resolve();
+}
+
+function exitFullscreenSafely() {
+  examStarted = false;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+
+function lockExam() {
+  if (!examStarted || examFinished) return;
+  document.getElementById("lockOverlay").classList.remove("hidden");
+  document.getElementById("unlockPassword").value = "";
+  document.getElementById("unlockError").textContent = "";
+  violationCount++;
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (!isFullscreen() && examStarted && !examFinished) lockExam();
+});
+document.addEventListener("webkitfullscreenchange", () => {
+  if (!isFullscreen() && examStarted && !examFinished) lockExam();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && examStarted && !examFinished) lockExam();
+});
+window.addEventListener("blur", () => {
+  if (examStarted && !examFinished) lockExam();
+});
+
+document.getElementById("unlockBtn").addEventListener("click", () => {
+  const pw = document.getElementById("unlockPassword").value;
+  const errEl = document.getElementById("unlockError");
+  if (pw === UNLOCK_PASSWORD) {
+    document.getElementById("lockOverlay").classList.add("hidden");
+    requestFS().finally(() => {});
+  } else {
+    errEl.textContent = "Incorrect password. Try again.";
+  }
+});
+
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+document.addEventListener("keydown", (e) => {
+  const blockedKeys = ["F12"];
+  const combo = (e.ctrlKey || e.metaKey) && ["c","x","v","u","s","p"].includes(e.key.toLowerCase());
+  const devtools = (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(e.key)) || blockedKeys.includes(e.key);
+  if (combo || devtools) {
+    e.preventDefault();
+  }
+});
+document.addEventListener("copy", (e) => { if (examStarted && !examFinished) e.preventDefault(); });
+document.addEventListener("selectstart", (e) => { if (examStarted && !examFinished) e.preventDefault(); });
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const nameVal = document.getElementById("fullName").value.trim();
+  const emailVal = document.getElementById("email").value.trim();
+  const errEl = document.getElementById("startError");
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (nameVal.length < 5 || nameVal.split(" ").length < 2) {
+    errEl.textContent = "Please enter your full name (first and last name).";
+    return;
+  }
+  if (!emailPattern.test(emailVal)) {
+    errEl.textContent = "Please enter a valid institutional email address.";
+    return;
+  }
+  errEl.textContent = "";
+  studentName = nameVal;
+  studentEmail = emailVal;
+  examQuestions = buildExam();
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("examScreen").classList.remove("hidden");
+  requestFS().finally(() => {
+    examStarted = true;
+    currentIndex = 0;
+    userAnswers = {};
+    secondsElapsed = 0;
+    examFinished = false;
+    renderQuestion();
+    startTimer();
+  });
+});
+</script>
+</body>
+</html>
